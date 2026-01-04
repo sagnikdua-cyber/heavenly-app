@@ -17,15 +17,36 @@ export async function getDb(): Promise<Database> {
         ? '/data/dev.db'
         : path.join(process.cwd(), 'prisma', 'dev.db');
 
-    // Ensure directory exists
+    // Ensure directory exists with fallback to /tmp on failure
     const dbDir = path.dirname(dbPath);
-    if (!fs.existsSync(dbDir)) {
-        console.log('[DB] Creating database directory:', dbDir);
-        try {
+
+    // Safety check: if /data exists but we can't write, try /tmp
+    try {
+        if (!fs.existsSync(dbDir)) {
+            console.log('[DB] Creating database directory:', dbDir);
             fs.mkdirSync(dbDir, { recursive: true });
-        } catch (error) {
-            console.error('[DB] Failed to create database directory:', error);
         }
+
+        // Test write permissions
+        const testFile = path.join(dbDir, '.write-test');
+        fs.writeFileSync(testFile, 'test');
+        fs.unlinkSync(testFile);
+        console.log('[DB] Directory is writable:', dbDir);
+    } catch (error) {
+        console.error('[DB] Primary directory failed:', error);
+
+        // FALLBACK: Use ephemeral /tmp storage if /data fails
+        // Note: Data will be lost on restart, but better than crashing
+        const fallbackPath = '/tmp/heavenly_dev.db';
+        console.warn('[DB] Switching to fallback database at:', fallbackPath);
+        return await open({
+            filename: fallbackPath,
+            driver: sqlite3.Database
+        }).then(async (fallbackDb) => {
+            // Run migration on fallback DB immediately
+            await migrateDb(fallbackDb);
+            return fallbackDb;
+        });
     }
 
     console.log('[DB] Opening database at:', dbPath);
@@ -35,6 +56,11 @@ export async function getDb(): Promise<Database> {
         driver: sqlite3.Database,
     });
 
+    await migrateDb(db);
+    return db;
+}
+
+async function migrateDb(db: Database) {
     // Ensure tables exist (migration)
     try {
         // User table
@@ -93,6 +119,4 @@ export async function getDb(): Promise<Database> {
             console.error('[DB] Migration error:', error);
         }
     }
-
-    return db;
 }
