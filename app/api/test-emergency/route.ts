@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize safely (prevents build crash if env var is missing during static generation)
+const resend = new Resend(process.env.RESEND_API_KEY || "");
 
 /**
  * TEMPORARY TEST ROUTE - DELETE BEFORE PRODUCTION
