@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { Resend } from "resend";
 import { getDb } from "@/lib/db";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend initialized locally in helper functions to avoid build errors
 
 /**
  * Logging utility for emergency alerts
@@ -31,6 +31,8 @@ async function sendEmailWithRetry(
     htmlBody: string,
     attemptNumber: number = 1
 ): Promise<boolean> {
+    // Initialize lazily
+    const resend = new Resend(process.env.RESEND_API_KEY || "");
     try {
         await resend.emails.send({
             from: "Heavenly Crisis Alert <alerts@resend.dev>",

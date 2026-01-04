@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-// Initialize safely (prevents build crash if env var is missing during static generation)
-const resend = new Resend(process.env.RESEND_API_KEY || "");
+// Resend initialized lazily inside handler
 
 /**
  * TEMPORARY TEST ROUTE - DELETE BEFORE PRODUCTION
@@ -102,6 +101,9 @@ export async function GET(req: Request) {
         </body>
       </html>
     `;
+
+    // Initialize Resend lazily to prevent build-time errors
+    const resend = new Resend(process.env.RESEND_API_KEY || "");
 
     // Send test email
     const result = await resend.emails.send({
