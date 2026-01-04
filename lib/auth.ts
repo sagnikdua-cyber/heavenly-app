@@ -71,5 +71,6 @@ export const authOptions: NextAuthOptions = {
     session: {
         strategy: "jwt",
     },
-    secret: process.env.NEXTAUTH_SECRET,
+    // FALLBACK SECRET for debugging (prevents crash if env var is missing)
+    secret: process.env.NEXTAUTH_SECRET || "temporary-fallback-secret-please-set-env-var",
 };
