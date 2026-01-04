@@ -8,33 +8,33 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * Tests emergency email system with mock data
  */
 export async function GET(req: Request) {
-    try {
-        // Get test email from query params
-        const { searchParams } = new URL(req.url);
-        const testEmail = searchParams.get('email');
+  try {
+    // Get test email from query params
+    const { searchParams } = new URL(req.url);
+    const testEmail = searchParams.get('email');
 
-        if (!testEmail) {
-            return NextResponse.json(
-                { error: "Please provide ?email=your-email@example.com" },
-                { status: 400 }
-            );
-        }
+    if (!testEmail) {
+      return NextResponse.json(
+        { error: "Please provide ?email=your-email@example.com" },
+        { status: 400 }
+      );
+    }
 
-        // Mock crisis data
-        const mockData = {
-            userName: "Test User",
-            userEmail: "testuser@example.com",
-            crisisSnippet: "I want to kill myself (TEST MESSAGE)",
-            lat: 12.9716,
-            lng: 77.5946,
-        };
+    // Mock crisis data
+    const mockData = {
+      userName: "Test User",
+      userEmail: "testuser@example.com",
+      crisisSnippet: "I want to kill myself (TEST MESSAGE)",
+      lat: 12.9716,
+      lng: 77.5946,
+    };
 
-        const mapsLink = `https://www.google.com/maps?q=${mockData.lat},${mockData.lng}`;
-        const locationText = `Coordinates: ${mockData.lat}, ${mockData.lng}`;
+    const mapsLink = `https://www.google.com/maps?q=${mockData.lat},${mockData.lng}`;
+    const locationText = `Coordinates: ${mockData.lat}, ${mockData.lng}`;
 
-        // Email content
-        const subject = `[TEST] [URGENT] Mental Health Crisis Alert - ${mockData.userName}`;
-        const htmlBody = `
+    // Email content
+    const subject = `[TEST] [URGENT] Mental Health Crisis Alert - ${mockData.userName}`;
+    const htmlBody = `
       <!DOCTYPE html>
       <html>
         <head>
@@ -102,42 +102,46 @@ export async function GET(req: Request) {
       </html>
     `;
 
-        // Send test email
-        const result = await resend.emails.send({
-            from: "Heavenly Crisis Alert <alerts@resend.dev>",
-            to: testEmail,
-            subject: subject,
-            html: htmlBody,
-            headers: {
-                "X-Priority": "1",
-                "Importance": "high",
-            },
-        });
+    // Send test email
+    const result = await resend.emails.send({
+      from: "Heavenly Crisis Alert <alerts@resend.dev>",
+      to: testEmail,
+      subject: subject,
+      html: htmlBody,
+      headers: {
+        "X-Priority": "1",
+        "Importance": "high",
+      },
+    });
 
-        return NextResponse.json({
-            success: true,
-            message: `Test email sent to ${testEmail}`,
-            emailId: result.id,
-            testData: {
-                userEmail: mockData.userEmail,
-                crisisSnippet: mockData.crisisSnippet,
-                googleMapsLink: mapsLink,
-                coordinates: { lat: mockData.lat, lng: mockData.lng },
-            },
-            verification: {
-                emailFormat: `[${mockData.userEmail}] is suffering from mental trauma and dealing with suicidal thoughts. Please help them immediately.`,
-                mapsLinkFormat: `https://www.google.com/maps?q=${mockData.lat},${mockData.lng}`,
-            },
-        });
-
-    } catch (error: any) {
-        console.error("[TEST EMERGENCY] Error:", error);
-        return NextResponse.json(
-            {
-                error: "Failed to send test email",
-                details: error.message
-            },
-            { status: 500 }
-        );
+    if (result.error) {
+      throw new Error(result.error.message || "Unknown error sending email");
     }
+
+    return NextResponse.json({
+      success: true,
+      message: `Test email sent to ${testEmail}`,
+      emailId: result.data?.id,
+      testData: {
+        userEmail: mockData.userEmail,
+        crisisSnippet: mockData.crisisSnippet,
+        googleMapsLink: mapsLink,
+        coordinates: { lat: mockData.lat, lng: mockData.lng },
+      },
+      verification: {
+        emailFormat: `[${mockData.userEmail}] is suffering from mental trauma and dealing with suicidal thoughts. Please help them immediately.`,
+        mapsLinkFormat: `https://www.google.com/maps?q=${mockData.lat},${mockData.lng}`,
+      },
+    });
+
+  } catch (error: any) {
+    console.error("[TEST EMERGENCY] Error:", error);
+    return NextResponse.json(
+      {
+        error: "Failed to send test email",
+        details: error.message
+      },
+      { status: 500 }
+    );
+  }
 }
