@@ -122,11 +122,14 @@ export async function POST(req: Request) {
             }, { status: 500 });
         }
 
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+        const key = process.env.GEMINI_API_KEY;
+        console.log(`[GEMINI API] Key loaded. Length: ${key.length}, Starts with: ${key.substring(0, 4)}...`);
 
-        // Initialize model (Use 'gemini-flash-latest' alias for maximum availability)
+        const genAI = new GoogleGenerativeAI(key);
+
+        // Initialize model (Use 'gemini-1.5-flash' for stability)
         const model = genAI.getGenerativeModel({
-            model: "gemini-flash-latest",
+            model: "gemini-1.5-flash",
         });
 
         // Format history for Gemini
