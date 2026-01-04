@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getDb } from "@/lib/db";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Resend initialized locally to avoid build errors
 
 export async function POST(req: Request) {
   try {
@@ -128,6 +128,9 @@ export async function POST(req: Request) {
         // Send emails
         for (const recipient of recipients) {
           try {
+            // Initialize locally to avoid build errors
+            const resend = new Resend(process.env.RESEND_API_KEY || "");
+
             await resend.emails.send({
               from: "Heavenly Crisis Alert <alerts@resend.dev>",
               to: recipient,
