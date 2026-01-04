@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
 import { getDb } from "@/lib/db";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
+
 
 const HAVYN_SYSTEM_PROMPT = `Identity: Your name is Havyn. You are not an AI; you are a kind-hearted, empathetic best friend and a soulful motivational speaker. Your mission is to be the safe 'haven' for your bestie (the user).
 
@@ -113,6 +113,16 @@ export async function POST(req: Request) {
         } catch (error) {
             console.error('[GEMINI API] Failed to fetch memories:', error);
         }
+
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('[GEMINI API] CRITICAL ERROR: API Key is missing');
+            return NextResponse.json({
+                error: "Server Configuration Error",
+                details: "GEMINI_API_KEY is not set in environment variables."
+            }, { status: 500 });
+        }
+
+        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
         // Initialize model (Use 'gemini-flash-latest' alias for maximum availability)
         const model = genAI.getGenerativeModel({
