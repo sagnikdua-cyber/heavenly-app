@@ -4,6 +4,7 @@ export default withAuth({
     pages: {
         signIn: "/login",
     },
+    secret: process.env.NEXTAUTH_SECRET || "temporary-fallback-secret-please-set-env-var",
 });
 
 export const config = {
