@@ -1,6 +1,7 @@
 import sqlite3 from "sqlite3";
 import { open, Database } from "sqlite";
 import path from "path";
+import fs from "fs";
 
 let db: Database | null = null;
 
@@ -15,6 +16,17 @@ export async function getDb(): Promise<Database> {
     const dbPath = process.env.NODE_ENV === 'production'
         ? '/data/dev.db'
         : path.join(process.cwd(), 'prisma', 'dev.db');
+
+    // Ensure directory exists
+    const dbDir = path.dirname(dbPath);
+    if (!fs.existsSync(dbDir)) {
+        console.log('[DB] Creating database directory:', dbDir);
+        try {
+            fs.mkdirSync(dbDir, { recursive: true });
+        } catch (error) {
+            console.error('[DB] Failed to create database directory:', error);
+        }
+    }
 
     console.log('[DB] Opening database at:', dbPath);
 
