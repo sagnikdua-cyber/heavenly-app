@@ -114,10 +114,9 @@ export async function POST(req: Request) {
             console.error('[GEMINI API] Failed to fetch memories:', error);
         }
 
-        // Initialize model (gemini-2.0-flash is confirmed available)
-        // We use manual system prompt injection below to ensure compatibility across all API versions
+        // Initialize model (Use 'gemini-flash-latest' alias for maximum availability)
         const model = genAI.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-flash-latest",
         });
 
         // Format history for Gemini
