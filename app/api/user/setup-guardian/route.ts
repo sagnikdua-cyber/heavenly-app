@@ -23,6 +23,14 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
         }
 
+        // PREVENT COLLISION: Guardian email cannot be the same as user email
+        if (email.toLowerCase() === session.user.email?.toLowerCase()) {
+            return NextResponse.json(
+                { error: "You cannot set yourself as your own guardian. Please use a different email address." },
+                { status: 400 }
+            );
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const db = await getDb();
 

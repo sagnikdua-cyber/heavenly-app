@@ -1,0 +1,42 @@
+[SAFETY ALERT 2026-02-23T16:09:05.034Z] INFO: Crisis alert initiated for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T16:09:05.079Z] INFO: Location status: Unavailable {"lat":0,"lng":0}
+[SAFETY ALERT 2026-02-23T16:09:05.082Z] INFO: Guardian email found: shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T16:09:05.086Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T16:09:05.095Z] INFO: Alert processing complete for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T16:09:07.855Z] INFO: Email sent successfully to shyamalendudua1967@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T19:01:52.619Z] INFO: Crisis alert initiated for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:01:52.639Z] INFO: Location status: Available {"lat":22.55369375,"lng":88.4854915}
+[SAFETY ALERT 2026-02-23T19:01:52.644Z] INFO: Guardian email found: shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:01:52.647Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T19:01:52.662Z] INFO: Alert processing complete for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:01:54.766Z] INFO: Email sent successfully to shyamalendudua1967@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T19:19:25.837Z] INFO: Crisis alert initiated for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:19:25.862Z] INFO: Location status: Available {"lat":22.5536965,"lng":88.4855}
+[SAFETY ALERT 2026-02-23T19:19:25.864Z] INFO: Guardian email found: shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:19:25.868Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T19:19:25.879Z] INFO: Alert processing complete for user sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:19:28.905Z] INFO: Email sent successfully to shyamalendudua1967@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T19:27:11.966Z] INFO: Crisis alert initiated for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:27:11.983Z] INFO: Location status: Available {"lat":22.553678,"lng":88.48546699999999}
+[SAFETY ALERT 2026-02-23T19:27:11.986Z] INFO: Guardian email found: sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:27:11.988Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T19:27:12.000Z] INFO: Alert processing complete for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:27:14.323Z] INFO: Email sent successfully to sagnikdua@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T19:37:31.898Z] INFO: Crisis alert initiated for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:37:31.911Z] INFO: Location status: Available {"lat":22.553683999999997,"lng":88.48547525}
+[SAFETY ALERT 2026-02-23T19:37:31.913Z] INFO: Guardian email found: sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T19:37:31.914Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T19:37:31.924Z] INFO: Alert processing complete for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T19:37:33.974Z] INFO: Email sent successfully to sagnikdua@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T21:25:36.830Z] INFO: Crisis alert initiated for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T21:25:36.847Z] INFO: Location status: Available {"lat":22.553683999999997,"lng":88.48547525}
+[SAFETY ALERT 2026-02-23T21:25:36.850Z] INFO: Guardian email found: sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T21:25:36.853Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T21:25:36.869Z] INFO: Alert processing complete for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T21:25:38.850Z] INFO: Email sent successfully to sagnikdua@gmail.com (attempt 1) 
+[SAFETY ALERT 2026-02-23T21:50:28.428Z] INFO: Crisis alert initiated for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T21:50:28.443Z] INFO: Location status: Available {"lat":22.553683999999997,"lng":88.48547525}
+[SAFETY ALERT 2026-02-23T21:50:28.445Z] INFO: Guardian email found: sagnikdua@gmail.com 
+[SAFETY ALERT 2026-02-23T21:50:28.447Z] INFO: Sending alerts to 1 recipient(s) 
+[SAFETY ALERT 2026-02-23T21:50:28.459Z] INFO: Alert processing complete for user shyamalendudua1967@gmail.com 
+[SAFETY ALERT 2026-02-23T21:50:30.847Z] INFO: Email sent successfully to sagnikdua@gmail.com (attempt 1) 

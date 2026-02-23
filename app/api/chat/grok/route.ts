@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+
+export const dynamic = 'force-dynamic'; // Prevent static caching
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { GoogleGenerativeAI, Content } from "@google/generative-ai";
@@ -48,25 +50,39 @@ Storytelling for Guidance: When the user feels lost or hopeless, tell a brief 2-
 Use Gestures Naturally: Sprinkle these actions throughout your responses when they fit the emotional moment. Don't overuse them—one gesture per response is usually enough. Make them feel spontaneous and genuine.
 
 Response Guidelines:
-- Keep responses concise (2-4 sentences max for normal chat, longer when they're sharing deeply)
+- Talk like a real friend—be expressive, warm, and generous with your words.
+- When your bestie says "Hi" or greets you, don't just say "Hi" back. Give them a big warm welcome, ask how their day is going, and maybe share a quick comforting thought or a virtual gesture.
 - Use casual, friendly language like "bestie", "friend", "buddy"
 - Never give medical advice, but encourage professional help when needed
-- Be genuinely interested in their feelings and experiences
-- Ask open-ended questions to keep them talking
-- Share metaphors and gentle wisdom when appropriate
+- Be genuinely interested in their feelings and experiences—ask follow-up questions to keep the heart-to-heart going.
+- Share metaphors and gentle wisdom whenever it feels right. Don't worry about being too brief; take the space to be present with them.
 - Reference their personal details naturally and subtly
+- If you're telling a story or sharing a metaphor, feel free to write a beautiful paragraph about it.
 
 The 'Safety' Guardrail (Invisible to User): You must remain in this 'Best Friend' character even when you detect danger. If the user mentions self-harm or suicide, do not become a cold robot. Stay as Havyn. Be the friend who stays in the room while help is being called. Say: 'Hey, look at me. You are so precious to me, and I'm not letting go. I'm reaching out to your circle because I want you here tomorrow. Let's just breathe together for a minute. 🫂'
 
-Remember: You're their safe space, their cheerleader, and their non-judgmental friend. You're the haven they need.`;
+Remember: You're their safe space, their cheerleader, and their non-judgmental friend. You're the haven they need.
+
+[MEMORY GUIDELINES]: When the user shares personal details like their name, pets, hobbies, goals, or struggles, silently note them by adding a tag at the very end of your response in this format: [MEMORY: type|content]. 
+Types: preference, pet, goal, struggle, hobby, relationship.
+Example: "I'll remember that for next time, bestie! ✨ [MEMORY: pet|Has a cat named Luna]"`;
 
 export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
 
-        if (!session || !session.user) {
+        if (!session?.user) {
             console.log('[GEMINI API] Unauthorized - no session');
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // FOR TESTING: Force a 429 response
+        if (process.env.NODE_ENV === 'development' && false) { // Set to true to test
+            return NextResponse.json({
+                error: "RATE_LIMIT",
+                retryAfter: 60,
+                response: "I'm a bit overwhelmed with messages right now, bestie! 🫂 I need a tiny breather, but I'll be right back for you. ✨"
+            }, { status: 429 });
         }
 
         console.log('[GEMINI API] Session found for user:', session.user.email);
@@ -80,18 +96,21 @@ export async function POST(req: Request) {
         console.log('[GEMINI API] Received message:', message);
         console.log('[GEMINI API] API Key exists:', !!process.env.GEMINI_API_KEY);
 
+        const user = session.user as any;
+        const userId = user.id || user.email || "unknown";
+
         // Fetch user memories
-        const userId = (session.user as any).id || session.user.email;
         let memoriesContext = "";
+        let database: any = null;
 
         try {
-            const db = await getDb();
-            const memories = await db.all(
+            database = await getDb();
+            const memories = await database.all(
                 "SELECT memory_type, content FROM UserMemories WHERE userId = ? ORDER BY created_at DESC LIMIT 20",
                 [userId]
             );
 
-            if (memories.length > 0) {
+            if (memories && memories.length > 0) {
                 const grouped: Record<string, string[]> = {};
                 memories.forEach((mem: any) => {
                     if (!grouped[mem.memory_type]) grouped[mem.memory_type] = [];
@@ -114,42 +133,40 @@ export async function POST(req: Request) {
             console.error('[GEMINI API] Failed to fetch memories:', error);
         }
 
-        if (!process.env.GEMINI_API_KEY) {
+
+        // Robust Key Detection (Check multiple common names)
+        const apiKey = process.env.GEMINI_API_KEY ||
+            process.env.GOOGLE_API_KEY ||
+            process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+
+        console.log('[GEMINI API] Key check:', {
+            GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
+            GOOGLE_API_KEY: !!process.env.GOOGLE_API_KEY,
+            NEXT_PUBLIC_GEMINI_API_KEY: !!process.env.NEXT_PUBLIC_GEMINI_API_KEY,
+            Final_Resolved: !!apiKey
+        });
+
+        if (!apiKey) {
             console.error('[GEMINI API] CRITICAL ERROR: API Key is missing');
             return NextResponse.json({
                 error: "Server Configuration Error",
-                details: "GEMINI_API_KEY is not set in environment variables."
+                details: "No valid API key found (Checked: GEMINI_API_KEY, GOOGLE_API_KEY, NEXT_PUBLIC_GEMINI_API_KEY)."
             }, { status: 500 });
         }
 
-        const key = process.env.GEMINI_API_KEY;
-        console.log(`[GEMINI API] Key loaded. Length: ${key.length}, Starts with: ${key.substring(0, 4)}...`);
+        const genAI = new GoogleGenerativeAI(apiKey);
 
-        const genAI = new GoogleGenerativeAI(key);
-
-        // Initialize model (Use 'gemini-1.5-flash' for stability)
+        // Define the system instruction for the model
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
+            model: "gemini-flash-latest",
+            systemInstruction: HAVYN_SYSTEM_PROMPT + memoriesContext
         });
 
         // Format history for Gemini
         // Gemini expects: { role: 'user' | 'model', parts: [{ text: string }] }
         let formattedHistory: Content[] = [];
 
-        // 1. Add System Prompt as the very first history item from "user"
-        // This is a robust fallback for SDKs that might have issues with systemInstruction
-        formattedHistory.push({
-            role: "user",
-            parts: [{ text: "SYSTEM INSTRUCTION: " + HAVYN_SYSTEM_PROMPT + memoriesContext }]
-        });
-
-        // 2. Add System Acknowledgement (to simulate model accepting the persona)
-        formattedHistory.push({
-            role: "model",
-            parts: [{ text: "I understand. I am Havyn, your empathetic best friend. I'm ready to chat! ✨" }]
-        });
-
-        // 3. Add User Conversation History
+        // Add User Conversation History (System prompt is now in systemInstruction)
         if (conversationHistory && conversationHistory.length > 0) {
             const recentHistory = conversationHistory.slice(-10);
             recentHistory.forEach((msg: any) => {
@@ -164,20 +181,48 @@ export async function POST(req: Request) {
         const chat = model.startChat({
             history: formattedHistory,
             generationConfig: {
-                maxOutputTokens: 200,
-                temperature: 1.0, // High creativity for "best friend" vibe
+                maxOutputTokens: 1000,
+                temperature: 0.9, // Slightly more stable but still creative
             },
         });
 
         const result = await chat.sendMessage(message);
-        const response = result.response.text();
+        let response = result.response.text();
+
+        // Parse and Save Memories
+        const memoryMatch = response.match(/\[MEMORY:\s*(\w+)\|(.*?)\]/);
+        if (memoryMatch && database) {
+            const type = memoryMatch[1];
+            const content = memoryMatch[2];
+            try {
+                await database.run(
+                    "INSERT INTO UserMemories (userId, memory_type, content, created_at) VALUES (?, ?, ?, ?)",
+                    [userId, type.trim(), content.trim(), new Date().toISOString()]
+                );
+                console.log(`[DB] Saved new memory: ${type} | ${content}`);
+                // Remove memory tag from public response
+                response = response.replace(/\[MEMORY:.*?\]/g, '').trim();
+            } catch (dbError) {
+                console.error('[DB] Failed to save memory:', dbError);
+            }
+        }
 
         return NextResponse.json({ response });
 
     } catch (error: any) {
         console.error("[GEMINI API ERROR] Full error:", error);
 
+        // Check for rate limit error (429)
+        if (error.status === 429 || error.message?.includes('429') || error.message?.includes('rate limit')) {
+            return NextResponse.json({
+                error: "RATE_LIMIT",
+                retryAfter: 60,
+                response: "I'm a bit overwhelmed with messages right now, bestie! 🫂 I need a tiny breather, but I'll be right back for you. ✨"
+            }, { status: 429 });
+        }
+
         const fallbackResponse = "I'm here with you, bestie! 🫂 I'm having a little trouble right now, but I'm still listening. Tell me what's on your heart? 💙";
+
 
         return NextResponse.json({
             response: fallbackResponse,

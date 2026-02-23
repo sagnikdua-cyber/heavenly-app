@@ -1,14 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, PhoneCall, Bell, Shield, ArrowRight, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import gsap from "gsap";
 
 export default function RequestPermissionsPage() {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const containerRef = useRef<HTMLDivElement>(null);
+    const cardsRef = useRef<HTMLDivElement[]>([]);
+
+    useLayoutEffect(() => {
+        let ctx = gsap.context(() => {
+            // Floating animation for the whole container area
+            gsap.to(containerRef.current, {
+                y: "-=10",
+                duration: 4,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+
+            // Staggered floating and glow for individual cards
+            cardsRef.current.forEach((card, idx) => {
+                if (card) {
+                    gsap.to(card, {
+                        y: idx % 2 === 0 ? "-=8" : "+=8",
+                        x: idx % 2 === 0 ? "+=5" : "-=5",
+                        duration: 3 + Math.random(),
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "sine.inOut",
+                        delay: idx * 0.2
+                    });
+
+                    gsap.to(card, {
+                        boxShadow: "0 0 30px rgba(212,175,55,0.25)",
+                        duration: 2,
+                        repeat: -1,
+                        yoyo: true,
+                        ease: "sine.inOut",
+                        delay: idx * 0.3
+                    });
+                }
+            });
+        }, containerRef);
+
+        return () => ctx.revert();
+    }, []);
 
     const handleRequestPermissions = async () => {
         setIsLoading(true);
@@ -105,48 +147,44 @@ export default function RequestPermissionsPage() {
     ];
 
     return (
-        <div className="min-h-screen w-full bg-[#05091a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans p-6">
-            {/* Background Aura */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="min-h-screen w-full bg-[#02040a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans p-6 text-center">
+            {/* Dynamic Background Aura */}
+            <div className="bg-aura absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-15 pointer-events-none" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="relative z-10 w-full max-w-2xl text-center"
+            <div
+                ref={containerRef}
+                className="relative z-10 w-full max-w-xl p-10 bg-[#050505]/90 rounded-[3rem] border border-amber-500/20 shadow-[0_0_50px_rgba(212,175,55,0.15)] backdrop-blur-3xl"
             >
-                <div className="mb-12">
+                <div className="text-center mb-10">
                     <motion.div
                         initial={{ scale: 0.9, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 0.2, duration: 0.5 }}
-                        className="mb-8 inline-block p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10 shadow-[0_0_20px_rgba(212,175,55,0.05)]"
+                        className="mb-6 inline-block p-4 bg-amber-500/5 rounded-2xl border border-amber-500/10"
                     >
-                        <Shield size={40} className="text-[#d4af37]" />
+                        <Shield size={32} className="text-[#d4af37]" />
                     </motion.div>
-                    <h1 className="text-3xl font-extralight tracking-[0.2em] text-[#d4af37] mb-4 uppercase">Security Permissions</h1>
+                    <h1 className="text-3xl font-light tracking-wide text-[#d4af37] mb-3">Safe Haven Setup</h1>
                     <p className="text-sm opacity-60 font-light max-w-md mx-auto leading-relaxed">
-                        To provide the protection promised, Heavenly requires access to these specific system functions.
+                        To keep you safe and connected, Havyn needs a few permissions. Your privacy is our priority.
                     </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 text-left">
                     {disclosures.map((item, idx) => (
-                        <motion.div
+                        <div
                             key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.4 + idx * 0.1, duration: 0.6 }}
-                            className="p-6 bg-[#0a0e27]/80 rounded-2xl border border-amber-500/10 backdrop-blur-xl group hover:border-amber-500/30 transition-all duration-300"
+                            ref={(el) => { if (el) cardsRef.current[idx] = el; }}
+                            className="p-6 bg-black/60 rounded-2xl border border-amber-500/20 backdrop-blur-xl group hover:border-amber-500/40 transition-all duration-300 shadow-[0_0_20px_rgba(212,175,55,0.05)]"
                         >
-                            <div className="mb-4 inline-block p-3 bg-amber-500/5 rounded-xl border border-amber-500/5 group-hover:scale-110 transition-transform duration-500">
+                            <div className="mb-4 inline-block p-3 bg-amber-500/5 rounded-xl border border-amber-500/10 group-hover:scale-110 transition-transform duration-500 group-hover:border-amber-500/30">
                                 {item.icon}
                             </div>
-                            <h3 className="text-sm font-medium tracking-wider text-amber-200 mb-2">{item.title}</h3>
-                            <p className="text-[11px] opacity-60 font-light leading-relaxed">
+                            <h3 className="text-sm font-medium tracking-wider text-amber-100 mb-2">{item.title}</h3>
+                            <p className="text-[11px] text-amber-200/40 font-light leading-relaxed">
                                 {item.desc}
                             </p>
-                        </motion.div>
+                        </div>
                     ))}
                 </div>
 
@@ -154,7 +192,7 @@ export default function RequestPermissionsPage() {
                     <button
                         onClick={handleRequestPermissions}
                         disabled={isLoading}
-                        className="group relative px-10 py-4 bg-gradient-to-r from-[#d4af37] via-[#fcf6ba] to-[#d4af37] text-[#05091a] rounded-full font-bold text-sm tracking-widest uppercase overflow-hidden transition-all duration-500 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+                        className="group relative px-10 py-4 bg-gradient-to-r from-[#d4af37] via-[#fcf6ba] to-[#d4af37] text-[#05091a] rounded-full font-bold text-sm tracking-widest uppercase overflow-hidden transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
                     >
                         <div className="relative z-10 flex items-center gap-2">
                             {isLoading ? (
@@ -175,7 +213,7 @@ export default function RequestPermissionsPage() {
                         Skip for now
                     </button>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 }

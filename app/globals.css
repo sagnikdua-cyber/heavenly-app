@@ -1,17 +1,45 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #0a0e27;
-  --color-foreground: #ededed;
+  --color-background: #02040a;
+  --color-foreground: #fcf6ba;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 body {
-  background: var(--color-background);
-  color: var(--color-foreground);
+  background: #02040a;
+  color: #fcf6ba;
   font-family: Arial, Helvetica, sans-serif;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* To prevent scrollbars if not needed */
+  overflow: hidden;
+}
+
+/* Global Input Autofill Overrides */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #050505 inset !important;
+  -webkit-text-fill-color: #fcf6ba !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Custom Scrollbar for Obsidian Theme */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #02040a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.2);
 }

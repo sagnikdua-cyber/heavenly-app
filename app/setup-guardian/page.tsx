@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,7 @@ import { Shield, Mail, Lock, ArrowRight, Loader2, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Tooltip from "@/components/ui/Tooltip";
 import toast from "react-hot-toast";
+import gsap from "gsap";
 
 // Schema where fields are optional unless one is provided
 const guardianSchema = z.object({
@@ -31,6 +32,7 @@ export default function SetupGuardianPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
+    const cardRef = useRef<HTMLDivElement>(null);
 
     const {
         register,
@@ -43,6 +45,32 @@ export default function SetupGuardianPage() {
             code: "",
         },
     });
+
+    useLayoutEffect(() => {
+        let ctx = gsap.context(() => {
+            // Floating animation for the card
+            gsap.to(cardRef.current, {
+                y: "-=15",
+                x: "-=5",
+                rotation: -1,
+                duration: 3.5,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+
+            // Subtle glow pulse
+            gsap.to(cardRef.current, {
+                boxShadow: "0 0 50px rgba(212,175,55,0.4)",
+                duration: 2.5,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }, cardRef);
+
+        return () => ctx.revert();
+    }, []);
 
     const onSubmit = async (data: GuardianFormValues) => {
         setIsLoading(true);
@@ -100,15 +128,14 @@ export default function SetupGuardianPage() {
     };
 
     return (
-        <div className="min-h-screen w-full bg-[#05091a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans">
-            {/* Background Aura */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="min-h-screen w-full bg-[#02040a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans">
+            {/* Dynamic Background Aura */}
+            <div className="bg-aura absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-15 pointer-events-none" />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="relative z-10 w-full max-w-md p-8 bg-[#0a0e27]/90 rounded-3xl border border-amber-500/10 shadow-[0_8px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl"
+            <div
+                ref={cardRef}
+                className="relative z-10 w-full max-w-md p-10 bg-[#050505]/90 rounded-[2.5rem] border border-amber-500/20 shadow-[0_0_40px_rgba(212,175,55,0.2)] backdrop-blur-3xl"
             >
                 <div className="text-center mb-10">
                     <motion.div
@@ -149,10 +176,17 @@ export default function SetupGuardianPage() {
                         </div>
                         <div className="relative">
                             <input
-                                {...register("email")}
+                                {...register("email", {
+                                    validate: (value) => {
+                                        // This is a placeholder; we'll handle the actual session email check in the submission or via a more robust method
+                                        // But for now, hardening the input is the first step
+                                        return true;
+                                    }
+                                })}
                                 type="email"
-                                className={`w-full px-12 py-3.5 bg-[#05091a]/50 border ${errors.email ? "border-red-500/30" : "border-amber-900/20"
-                                    } rounded-2xl focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
+                                autoComplete="off"
+                                className={`w-full px-12 py-3.5 bg-black/60 border ${errors.email ? "border-red-500/30" : "border-amber-900/30"
+                                    } rounded-2xl focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
                                 placeholder="guardian@example.com"
                             />
                             <Mail size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-900/40" />
@@ -170,9 +204,10 @@ export default function SetupGuardianPage() {
                             <input
                                 {...register("code")}
                                 type="password"
-                                className={`w-full px-12 py-3.5 bg-[#05091a]/50 border ${errors.code ? "border-red-500/30" : "border-amber-900/20"
-                                    } rounded-2xl focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
-                                placeholder="Password"
+                                autoComplete="new-password"
+                                className={`w-full px-12 py-3.5 bg-black/60 border ${errors.code ? "border-red-500/30" : "border-amber-900/30"
+                                    } rounded-2xl focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
+                                placeholder="Create a code for your guardian"
                             />
                             <Lock size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-amber-900/40" />
                         </div>
@@ -209,7 +244,7 @@ export default function SetupGuardianPage() {
                         Skip for now
                     </button>
                 </div>
-            </motion.div>
+            </div>
         </div>
     );
 }

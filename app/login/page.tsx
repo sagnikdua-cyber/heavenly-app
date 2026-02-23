@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import gsap from "gsap";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -20,6 +21,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -28,6 +30,32 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+
+  useLayoutEffect(() => {
+    let ctx = gsap.context(() => {
+      // Floating animation for the card
+      gsap.to(cardRef.current, {
+        y: "-=15",
+        x: "+=5",
+        rotation: 1,
+        duration: 3,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+
+      // Subtle glow pulse
+      gsap.to(cardRef.current, {
+        boxShadow: "0 0 50px rgba(212,175,55,0.4)",
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
+    }, cardRef);
+
+    return () => ctx.revert();
+  }, []);
 
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
@@ -54,15 +82,14 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#05091a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans">
-      {/* Background Aura */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/5 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen w-full bg-[#02040a] text-amber-100 flex items-center justify-center relative overflow-hidden font-sans">
+      {/* Dynamic Background Aura */}
+      <div className="bg-aura absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-15 pointer-events-none" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-        className="relative z-10 w-full max-w-md p-8 bg-[#0a0e27]/90 rounded-3xl border border-amber-500/10 shadow-[0_8px_40px_rgba(0,0,0,0.6)] backdrop-blur-2xl"
+      <div
+        ref={cardRef}
+        className="relative z-10 w-full max-w-md p-10 bg-[#050505]/90 rounded-[2.5rem] border border-amber-500/20 shadow-[0_0_40px_rgba(212,175,55,0.2)] backdrop-blur-3xl"
       >
         <div className="text-center mb-10">
           <motion.div
@@ -97,8 +124,8 @@ export default function LoginPage() {
             <input
               {...register("email")}
               type="email"
-              className={`w-full px-5 py-3.5 bg-[#05091a]/50 border ${errors.email ? "border-red-500/30" : "border-amber-900/20"
-                } rounded-2xl focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
+              className={`w-full px-5 py-3.5 bg-black/60 border ${errors.email ? "border-red-500/30" : "border-amber-900/30"
+                } rounded-2xl focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
               placeholder="name@example.com"
             />
           </div>
@@ -114,8 +141,8 @@ export default function LoginPage() {
               <input
                 {...register("password")}
                 type={showPassword ? "text" : "password"}
-                className={`w-full px-5 py-3.5 bg-[#05091a]/50 border ${errors.password ? "border-red-500/30" : "border-amber-900/20"
-                  } rounded-2xl focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
+                className={`w-full px-5 py-3.5 bg-black/60 border ${errors.password ? "border-red-500/30" : "border-amber-900/30"
+                  } rounded-2xl focus:outline-none focus:border-amber-500/50 focus:ring-1 focus:ring-amber-500/20 text-amber-100 placeholder-amber-900/30 transition-all duration-300 font-light`}
                 placeholder="••••••••"
               />
               <button
@@ -155,7 +182,7 @@ export default function LoginPage() {
             <Link href="#" className="hover:text-amber-400 transition-colors duration-300">Forgot password?</Link>
           </div>
         </div>
-      </motion.div>
+      </div>
     </div>
   );
 }

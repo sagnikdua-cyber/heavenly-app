@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Send, Shield } from "lucide-react";
+import { Send, Shield, Clock, Timer, Settings, LogOut, Bot } from "lucide-react";
+import { signOut } from "next-auth/react";
 import { monitorSafety } from "@/lib/safety-monitor";
 import { triggerEmergencyProtocol } from "@/lib/emergency-protocol";
 import HelpButton from "@/components/HelpButton";
@@ -22,9 +23,23 @@ export default function ChatroomPage() {
     const [messages, setMessages] = useState<Message[]>([]);
     const [inputValue, setInputValue] = useState("");
     const [isTyping, setIsTyping] = useState(false);
+    const [showRateLimit, setShowRateLimit] = useState(false);
+    const [countdown, setCountdown] = useState(60);
     const [showHelpButton, setShowHelpButton] = useState(false);
     const [isFirstInteraction, setIsFirstInteraction] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout;
+        if (showRateLimit && countdown > 0) {
+            timer = setInterval(() => {
+                setCountdown(prev => prev - 1);
+            }, 1000);
+        } else if (countdown === 0) {
+            setShowRateLimit(false);
+        }
+        return () => clearInterval(timer);
+    }, [showRateLimit, countdown]);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -62,13 +77,6 @@ export default function ChatroomPage() {
             console.log('[CHATROOM] Message:', userMessage);
             console.log('[CHATROOM] Session exists:', !!session);
 
-            // Check for first interaction special greeting
-            const lowerMessage = userMessage.toLowerCase().trim();
-            if (isFirstInteraction && (lowerMessage === "hi" || lowerMessage === "hello" || lowerMessage === "hey")) {
-                console.log('[CHATROOM] Using first interaction greeting');
-                return "Hey bestie! I'm so happy you reached out. I've been waiting to chat with you! How is your heart feeling today? ✨";
-            }
-
             console.log('[CHATROOM] Fetching from /api/chat/grok...');
             const response = await fetch("/api/chat/grok", {
                 method: "POST",
@@ -81,6 +89,12 @@ export default function ChatroomPage() {
 
             console.log('[CHATROOM] API response status:', response.status);
             console.log('[CHATROOM] API response ok:', response.ok);
+
+            if (response.status === 429) {
+                setShowRateLimit(true);
+                setCountdown(60);
+                return "Wait a minute buddy, I will be here for u very soon";
+            }
 
             if (!response.ok) {
                 console.error('[CHATROOM] API returned error status:', response.status);
@@ -166,134 +180,103 @@ export default function ChatroomPage() {
     };
 
     return (
-        <motion.div
-            initial={{ opacity: 0, x: 100 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] }}
-            className="min-h-screen w-full bg-[#f2f1ec] text-gray-800 flex flex-col font-sans"
-        >
+        <div className="flex flex-col h-screen bg-[#f2f1ec] text-[#2c3e50] font-sans overflow-hidden">
             {/* Header */}
-            <header className="p-6 border-b border-[#004b6d]/20 backdrop-blur-md bg-[#004b6d] sticky top-0 z-50">
-                <div className="max-w-4xl mx-auto flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden">
-                            <img
-                                src="/havyn-avatar.png"
-                                alt="Havyn"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <div>
-                            <h1 className="text-lg font-light tracking-wide text-white">Havyn</h1>
-                            <p className="text-[10px] text-white/70">Your AI Companion</p>
+            <header className="flex items-center justify-between px-8 py-6 bg-[#004b6d] text-white shadow-md z-10">
+                <div className="flex items-center gap-4">
+                    <div className="relative">
+                        <div className="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden bg-white/10 shadow-lg">
+                            <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover" />
                         </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        <span className="text-[10px] text-white/80">Online</span>
+                    <div>
+                        <h1 className="text-xl font-medium tracking-tight leading-tight">Havyn</h1>
+                        <p className="text-[10px] opacity-70 uppercase tracking-widest mt-0.5">Your AI Companion</p>
                     </div>
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full shadow-[0_0_8px_rgba(74,222,128,0.5)]" />
+                    <span className="text-[11px] font-medium opacity-90 tracking-wide uppercase">Online</span>
                 </div>
             </header>
 
             {/* Chat Area */}
-            <main className="flex-1 p-6 overflow-y-auto">
-                <div className="max-w-4xl mx-auto">
-                    {messages.length === 0 ? (
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.3 }}
-                            className="text-center py-20"
+            <main className="flex-1 overflow-y-auto p-6 md:p-10 space-y-8 scroll-smooth custom-scrollbar">
+                {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center space-y-4 opacity-40">
+                        <Bot size={48} className="text-[#004b6d]" />
+                        <p className="text-lg font-light tracking-wide italic">"Every session is a new chapter in your sanctuary."</p>
+                    </div>
+                ) : (
+                    messages.map((msg, index) => (
+                        <div
+                            key={msg.id}
+                            className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"} items-start gap-3 animate-in fade-in slide-in-from-bottom-2 duration-400`}
                         >
-                            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-white flex items-center justify-center shadow-lg">
-                                <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover rounded-full" />
-                            </div>
-                            <h2 className="text-2xl font-light text-gray-700 mb-3">Start a conversation</h2>
-                            <p className="text-sm text-gray-500 max-w-md mx-auto">
-                                Havyn is here to listen, support, and help you navigate through anything on your mind.
-                            </p>
-                        </motion.div>
-                    ) : (
-                        <div className="space-y-4 pb-4">
-                            <AnimatePresence>
-                                {messages.map((message) => (
-                                    <motion.div
-                                        key={message.id}
-                                        initial={{ opacity: 0, y: 10 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0 }}
-                                        transition={{ duration: 0.3 }}
-                                        className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} `}
-                                    >
-                                        <div className={`flex gap-3 max-w-[80%] ${message.sender === "user" ? "flex-row-reverse" : "flex-row"}`}>
-                                            {message.sender === "havyn" && (
-                                                <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                                                    <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover rounded-full" />
-                                                </div>
-                                            )}
-                                            <div
-                                                className={`px-5 py-3 rounded-2xl ${message.sender === "user"
-                                                    ? "bg-[#8de6e1] text-gray-800"
-                                                    : "bg-gradient-to-r from-blue-400 to-purple-400 text-white"
-                                                    } `}
-                                            >
-                                                <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </AnimatePresence>
-
-                            {isTyping && (
-                                <motion.div
-                                    initial={{ opacity: 0, y: 10 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="flex justify-start"
-                                >
-                                    <div className="flex gap-3 max-w-[80%]">
-                                        <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
-                                            <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover rounded-full" />
-                                        </div>
-                                        <div className="px-5 py-3 rounded-2xl bg-gradient-to-r from-blue-400 to-purple-400 text-white">
-                                            <div className="flex gap-1">
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce" style={{ animationDelay: "300ms" }} />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </motion.div>
+                            {msg.sender === "havyn" && (
+                                <div className="w-9 h-9 rounded-full overflow-hidden bg-white border border-gray-100 flex-shrink-0 mt-1 shadow-sm">
+                                    <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover" />
+                                </div>
                             )}
-
-                            <div ref={messagesEndRef} />
+                            <div
+                                className={`max-w-[85%] md:max-w-[65%] px-6 py-4 rounded-[1.5rem] shadow-sm text-sm leading-relaxed ${msg.sender === "user"
+                                    ? "bg-[#a9eaea] text-[#004b6d] rounded-tr-none"
+                                    : "bg-gradient-to-r from-[#4299e1] to-[#a855f7] text-white rounded-tl-none font-medium"
+                                    }`}
+                            >
+                                {msg.text}
+                                {msg.sender === "havyn" && index === messages.length - 1 && <span className="ml-2">✨</span>}
+                            </div>
                         </div>
-                    )}
-                </div>
+                    ))
+                )}
+                {isTyping && (
+                    <div className="flex justify-start items-start gap-3">
+                        <div className="w-9 h-9 rounded-full overflow-hidden bg-white border border-gray-100 flex-shrink-0 mt-1 shadow-sm">
+                            <img src="/havyn-avatar.png" alt="Havyn" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="bg-white border border-gray-100 px-6 py-4 rounded-[1.5rem] rounded-tl-none shadow-sm flex gap-1.5 items-center">
+                            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-duration:0.8s]" />
+                            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.2s]" />
+                            <span className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-duration:0.8s] [animation-delay:0.4s]" />
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
             </main>
 
             {/* Input Area */}
-            <footer className="p-6 border-t border-[#003a52] bg-[#004b6d]">
-                <div className="max-w-4xl mx-auto">
-                    <div className="flex items-center gap-4">
+            <footer className="p-10 pt-6 pb-8 bg-[#004b6d] relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10 pointer-events-none" />
+
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSendMessage();
+                    }}
+                    className="max-w-5xl mx-auto flex items-center gap-4 relative z-10"
+                >
+                    <div className="relative flex-1">
                         <input
                             type="text"
                             value={inputValue}
                             onChange={(e) => setInputValue(e.target.value)}
-                            onKeyPress={handleKeyPress}
                             placeholder="Type your message here..."
-                            className="flex-1 px-6 py-4 bg-white/10 border border-white/20 rounded-full text-white placeholder:text-white/60 focus:outline-none focus:border-white/40 focus:ring-2 focus:ring-white/20 transition-all"
+                            className="w-full px-8 py-5 bg-white/10 border border-white/20 rounded-full focus:outline-none focus:border-white/40 focus:ring-0 transition-all text-white placeholder-white/40 text-base"
                         />
-                        <button
-                            onClick={handleSendMessage}
-                            disabled={!inputValue.trim()}
-                            className="w-12 h-12 rounded-full bg-[#8de6e1] flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg hover:shadow-xl disabled:opacity-50 disabled:hover:scale-100"
-                        >
-                            <Send size={20} className="text-[#004b6d]" />
-                        </button>
                     </div>
-                    <p className="text-[10px] text-white/50 text-center mt-4">
-                        Havyn uses AI to provide support. Your conversations are private and secure.
-                    </p>
+                    <button
+                        type="submit"
+                        disabled={!inputValue.trim() || isTyping}
+                        className={`p-4 rounded-full transition-all duration-300 ${inputValue.trim() && !isTyping ? "bg-[#a9eaea] text-[#004b6d] shadow-[0_0_20px_rgba(169,234,234,0.3)] hover:scale-110 active:scale-95" : "bg-white/5 text-white/20"
+                            }`}
+                    >
+                        <Send size={22} className={inputValue.trim() && !isTyping ? "translate-x-0.5" : ""} />
+                    </button>
+                </form>
+
+                <div className="text-center mt-6 text-[11px] text-white/40 tracking-wide font-light relative z-10">
+                    Havyn uses AI to provide support. Your conversations are private and secure.
                 </div>
             </footer>
 
@@ -301,6 +284,45 @@ export default function ChatroomPage() {
             {showHelpButton && (
                 <HelpButton onDismiss={() => setShowHelpButton(false)} />
             )}
-        </motion.div>
+
+            {/* Rate Limit Modal */}
+            <AnimatePresence>
+                {showRateLimit && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                            className="bg-white border border-gray-100 rounded-[2.5rem] p-10 max-w-sm w-full shadow-2xl text-center"
+                        >
+                            <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-8 relative">
+                                <Timer className="w-10 h-10 text-[#004b6d] relative z-10" />
+                            </div>
+
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4 tracking-tight">
+                                Pause for Peace
+                            </h2>
+
+                            <p className="text-gray-600 mb-8 leading-relaxed text-sm">
+                                I'm soaking in your words, buddy. Just a tiny moment for me to catch my breath!
+                            </p>
+
+                            <div className="bg-gray-50 border border-gray-100 rounded-2xl py-6 px-8 mb-6">
+                                <span className="text-4xl font-bold font-mono text-[#004b6d]">
+                                    00:{countdown < 10 ? `0${countdown}` : countdown}
+                                </span>
+                            </div>
+
+                            <button
+                                onClick={() => setShowRateLimit(false)}
+                                className="w-full py-4 bg-[#004b6d] text-white rounded-xl font-bold shadow-lg hover:bg-[#003a54] transition-colors"
+                            >
+                                Got it
+                            </button>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 }
